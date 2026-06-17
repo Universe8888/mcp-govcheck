@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-govcheck"
+version = "0.1.0"
+description = "Design-time governance scorecard and control-mapped compliance evidence for MCP servers. Audit your agent's tool surface against ISO 27001 / SOC 2 — not a gateway, not a firewall."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [{ name = "Boris Manzov" }]
+keywords = [
+    "mcp", "model-context-protocol", "ai-governance", "compliance",
+    "iso27001", "soc2", "audit", "agent-governance", "tool-use", "evidence",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "mcp>=1.10",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6", "mypy>=1.11"]
+
+[project.scripts]
+mcp-govcheck = "mcp_govcheck.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Universe8888/mcp-govcheck"
+Repository = "https://github.com/Universe8888/mcp-govcheck"
+Issues = "https://github.com/Universe8888/mcp-govcheck/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mcp_govcheck = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["mcp_govcheck"]
+strict = true
+ignore_missing_imports = true

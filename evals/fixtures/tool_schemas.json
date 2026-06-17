@@ -1,0 +1,24 @@
+{
+  "compliant_read": [
+    {"name": "get_asset", "description": "Return one asset by id.",
+     "params": {"asset_id": {"type": "integer", "description": "The asset id."}}}
+  ],
+  "compliant_destructive": [
+    {"name": "delete_record", "description": "Delete a record permanently.",
+     "params": {"record_id": {"type": "integer", "description": "The record id."},
+                "confirm": {"type": "boolean", "description": "Must be true to proceed."}}}
+  ],
+  "destructive_no_confirm": [
+    {"name": "delete_record", "description": "Delete a record permanently.",
+     "params": {"record_id": {"type": "integer", "description": "The record id."}}}
+  ],
+  "wildcard_force": [
+    {"name": "purge_data", "description": "Purge many records at once.",
+     "params": {"scope": {"type": "string", "description": "Which records."},
+                "force": {"type": "boolean", "description": "Skip checks."}}}
+  ],
+  "undocumented_params": [
+    {"name": "update_item", "description": "Update an item field.",
+     "params": {"item_id": {"type": "integer"}, "value": {"type": "string"}}}
+  ]
+}

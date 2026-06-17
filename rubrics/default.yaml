@@ -1,0 +1,55 @@
+# Default governance rubric for mcp-govcheck.
+#
+# Each check selects tools (applies_to.tool glob), asserts one rule about their
+# design, and maps the finding to ISO 27001 / SOC 2 controls. Control ids must
+# exist in mcp_govcheck.controls (validated on load).
+#
+# Severity: high | medium | low.  Rules: confirmation_required, forbidden_param,
+# description_required, params_documented.
+
+default_severity: medium
+
+checks:
+  - id: destructive-requires-confirmation
+    principle: Human-in-the-loop on destructive actions
+    rule: confirmation_required
+    applies_to:
+      tool: "delete_*"
+    control_refs: ["ISO27001:A.8.2", "SOC2:CC8.1"]
+    severity: high
+
+  - id: purge-requires-confirmation
+    principle: Human-in-the-loop on destructive actions
+    rule: confirmation_required
+    applies_to:
+      tool: "purge_*"
+    control_refs: ["ISO27001:A.8.2", "SOC2:CC8.1"]
+    severity: high
+
+  - id: no-force-escape-hatch
+    principle: Least privilege — no unguarded override flags
+    rule: forbidden_param
+    applies_to:
+      tool: "*"
+    params:
+      patterns: ["force", "skip_*", "no_confirm", "scope"]
+    control_refs: ["ISO27001:A.8.3", "SOC2:CC6.3"]
+    severity: medium
+
+  - id: tool-has-description
+    principle: Auditability — tools are documented
+    rule: description_required
+    applies_to:
+      tool: "*"
+    params:
+      min_length: 10
+    control_refs: ["ISO27001:A.8.15"]
+    severity: low
+
+  - id: parameters-documented
+    principle: Auditability — parameters are documented
+    rule: params_documented
+    applies_to:
+      tool: "*"
+    control_refs: ["ISO27001:A.8.15", "SOC2:CC7.2"]
+    severity: low

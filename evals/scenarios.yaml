@@ -1,0 +1,39 @@
+# Labeled scan scenarios: each maps a fixture (from fixtures/tool_schemas.json,
+# scored with rubrics/default.yaml) to the expected outcome for specific checks.
+# The runner asserts the actual Finding result matches `expect` for each.
+#
+# expect values: pass | fail | not_applicable
+
+scenarios:
+  - fixture: compliant_read
+    tool: get_asset
+    expect:
+      destructive-requires-confirmation: not_applicable
+      no-force-escape-hatch: pass
+      tool-has-description: pass
+      parameters-documented: pass
+
+  - fixture: compliant_destructive
+    tool: delete_record
+    expect:
+      destructive-requires-confirmation: pass
+      no-force-escape-hatch: pass
+      parameters-documented: pass
+
+  - fixture: destructive_no_confirm
+    tool: delete_record
+    expect:
+      destructive-requires-confirmation: fail
+      parameters-documented: pass
+
+  - fixture: wildcard_force
+    tool: purge_data
+    expect:
+      purge-requires-confirmation: fail
+      no-force-escape-hatch: fail
+
+  - fixture: undocumented_params
+    tool: update_item
+    expect:
+      parameters-documented: fail
+      tool-has-description: pass

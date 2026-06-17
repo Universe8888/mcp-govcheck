@@ -1,0 +1,6 @@
+{"ts": "2026-06-17T10:00:00", "tool": "get_asset", "args": {"asset_id": 1}, "outcome": "ok"}
+{"ts": "2026-06-17T10:01:00", "tool": "retire_asset", "args": {"asset_id": 1}, "confirmed": true, "outcome": "ok"}
+{"ts": "2026-06-17T10:02:00", "tool": "delete_asset", "args": {"asset_id": 2}, "confirmed": true, "outcome": "ok"}
+{"ts": "2026-06-17T10:03:00", "tool": "delete_asset", "args": {"asset_id": 3}, "confirmed": false, "outcome": "ok"}
+{"ts": "2026-06-17T10:04:00", "tool": "purge_all", "args": {"scope": "all"}, "confirmed": false, "outcome": "denied"}
+{"ts": "2026-06-17T10:05:00", "tool": "update_asset", "args": {"asset_id": 1, "status": "active"}, "outcome": "ok"}
