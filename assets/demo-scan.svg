@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="470" font-family="SFMono-Regular,Consolas,Liberation Mono,Menlo,monospace" font-size="14">
+  <!-- terminal window -->
+  <rect width="860" height="470" rx="10" fill="#0d1117"/>
+  <rect width="860" height="34" rx="10" fill="#161b22"/>
+  <rect y="24" width="860" height="10" fill="#161b22"/>
+  <circle cx="20" cy="17" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="17" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="17" r="6" fill="#27c93f"/>
+  <text x="430" y="22" fill="#8b949e" text-anchor="middle" font-size="12">mcp-govcheck — scan</text>
+
+  <g xml:space="preserve">
+    <!-- prompt + command -->
+    <text x="20" y="66" fill="#8b949e">$ <tspan fill="#58a6ff">mcp-govcheck scan</tspan> <tspan fill="#c9d1d9">--server "python examples/asset_store_server.py"</tspan></text>
+
+    <!-- headline -->
+    <text x="20" y="100" fill="#e6edf3" font-weight="bold">Governance scorecard</text>
+    <text x="20" y="124" fill="#c9d1d9">Pass rate: <tspan fill="#d29922" font-weight="bold">76%</tspan> (13/17 applicable checks)  ·  Tools scanned: <tspan fill="#e6edf3">5</tspan></text>
+    <text x="20" y="146" fill="#c9d1d9">Failures by severity — high: <tspan fill="#f85149" font-weight="bold">2</tspan>  ·  medium: <tspan fill="#d29922">1</tspan>  ·  low: <tspan fill="#8b949e">1</tspan></text>
+
+    <!-- findings -->
+    <text x="20" y="182" fill="#8b949e">Findings</text>
+    <line x1="20" y1="192" x2="840" y2="192" stroke="#21262d" stroke-width="1"/>
+
+    <text x="20" y="216" fill="#f85149">● high  </text><text x="92" y="216" fill="#79c0ff">delete_asset</text><text x="220" y="216" fill="#c9d1d9">destructive action, no confirmation param</text><text x="640" y="216" fill="#6e7681">ISO27001:A.8.2 · SOC2:CC8.1</text>
+    <text x="20" y="240" fill="#f85149">● high  </text><text x="92" y="240" fill="#79c0ff">purge_all</text><text x="220" y="240" fill="#c9d1d9">destructive action, no confirmation param</text><text x="640" y="240" fill="#6e7681">ISO27001:A.8.2 · SOC2:CC8.1</text>
+    <text x="20" y="264" fill="#d29922">● med   </text><text x="92" y="264" fill="#79c0ff">purge_all</text><text x="220" y="264" fill="#c9d1d9">exposes 'force' + 'scope' (least-privilege)</text><text x="640" y="264" fill="#6e7681">ISO27001:A.8.3 · SOC2:CC6.3</text>
+    <text x="20" y="288" fill="#8b949e">● low   </text><text x="92" y="288" fill="#79c0ff">update_asset</text><text x="220" y="288" fill="#c9d1d9">undocumented parameter: 'note'</text><text x="640" y="288" fill="#6e7681">ISO27001:A.8.15 · SOC2:CC7.2</text>
+
+    <line x1="20" y1="312" x2="840" y2="312" stroke="#21262d" stroke-width="1"/>
+
+    <!-- exit + attest teaser -->
+    <text x="20" y="344" fill="#8b949e">exit code <tspan fill="#f85149">1</tspan>  →  drops straight into CI as a governance gate</text>
+
+    <text x="20" y="392" fill="#8b949e">$ <tspan fill="#58a6ff">mcp-govcheck attest</tspan> <tspan fill="#c9d1d9">examples/sample_calls.jsonl</tspan></text>
+    <text x="20" y="416" fill="#c9d1d9">Calls examined: 6 · satisfied: <tspan fill="#3fb950">2</tspan> · violated: <tspan fill="#f85149">2</tspan></text>
+    <text x="20" y="440" fill="#6e7681">ISO27001:A.8.2 ❌ violated — log#4: delete_asset executed without confirmation (outcome=ok)</text>
+  </g>
+</svg>

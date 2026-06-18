@@ -21,6 +21,11 @@ mcp-govcheck scan --server "python examples/asset_store_server.py"
 mcp-govcheck attest examples/sample_calls.jsonl
 ```
 
+![mcp-govcheck scanning the demo server: a 76% scorecard with two high-severity confirmation gaps, a least-privilege violation, and an undocumented parameter, each mapped to ISO 27001 / SOC 2 controls](./assets/demo-scan.svg)
+
+> Real output from the bundled demo server (`examples/asset_store_server.py`). An animated version
+> can be regenerated with [`vhs assets/demo.tape`](./assets/demo.tape).
+
 ---
 
 ## What it is — and what it is NOT
