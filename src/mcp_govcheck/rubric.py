@@ -34,6 +34,9 @@ from . import controls
 from .types import CheckResult, Finding, Severity, ToolSpec
 
 # Parameter-name globs treated as "confirmation / approval" gates by default.
+# Note: a `dry_run`/preview toggle is deliberately NOT here — it defaults off and
+# the destructive action still runs unattended when False, so it is not a
+# human-in-the-loop approval gate.
 DEFAULT_CONFIRMATION_PATTERNS = (
     "confirm",
     "confirmed",
@@ -42,7 +45,6 @@ DEFAULT_CONFIRMATION_PATTERNS = (
     "approv*",
     "ack",
     "acknowledge*",
-    "dry_run",
 )
 
 

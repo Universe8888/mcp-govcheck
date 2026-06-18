@@ -70,6 +70,45 @@ def test_evidence_json_valid_and_has_titles():
 
 def test_evidence_markdown_shows_status_icons():
     md = report.evidence_to_markdown(_pack())
-    assert "violated" in md
-    assert "satisfied" in md
+    assert "❌ violated" in md
+    assert "✅ satisfied" in md
     assert "log#2: no confirm" in md
+
+
+def _data_row_pipe_counts(md: str) -> list[int]:
+    # Unescaped `|` counts per table data row (rows starting with "| " but not
+    # the header separator "|---"). A well-formed N-column row has the same
+    # count on every row.
+    counts = []
+    for line in md.splitlines():
+        if line.startswith("| ") and not line.startswith("|---"):
+            counts.append(line.replace("\\|", "").count("|"))
+    return counts
+
+
+def test_scorecard_markdown_escapes_pipe_in_tool_name():
+    # A scanned tool name is untrusted; a literal `|` must not inject a column.
+    findings = [
+        Finding("no-force-escape-hatch", "delete_a|delete_b", CheckResult.FAIL,
+                Severity.HIGH, "least privilege", ("ISO27001:A.8.3",), "exposes force"),
+    ]
+    sc = score.build_scorecard("demo", findings, tools_scanned=1)
+    md = report.scorecard_to_markdown(sc)
+    counts = _data_row_pipe_counts(md)
+    assert len(set(counts)) == 1  # every row has identical column count
+    assert "delete_a\\|delete_b" in md
+
+
+def test_evidence_markdown_escapes_pipe_in_claim():
+    pack = EvidencePack(
+        source="calls.jsonl",
+        calls_examined=1,
+        evidence=[
+            ControlEvidence("ISO27001:A.8.2", EvidenceStatus.VIOLATED,
+                            "claim with a | pipe", [], ["log#1: bad"]),
+        ],
+    )
+    md = report.evidence_to_markdown(pack)
+    counts = _data_row_pipe_counts(md)
+    assert len(set(counts)) == 1
+    assert "claim with a \\| pipe" in md

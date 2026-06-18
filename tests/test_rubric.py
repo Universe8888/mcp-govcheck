@@ -81,6 +81,22 @@ def test_confirmation_required_passes_with_confirm_param():
     assert f.result is CheckResult.PASS
 
 
+def test_dry_run_does_not_satisfy_confirmation():
+    # A `dry_run` preview flag is NOT a human-in-the-loop approval gate: it
+    # defaults off and the destructive action still runs unattended when it is
+    # False. It must not let `confirmation_required` report a false PASS.
+    r = _rubric(CONFIRM_RUBRIC)
+    dry_run_only = ToolSpec(
+        name="delete_asset",
+        description="Delete an asset by id.",
+        params={
+            "asset_id": {"type": "integer", "description": "id"},
+            "dry_run": {"type": "boolean", "description": "preview only"},
+        },
+    )
+    assert r.evaluate([dry_run_only])[0].result is CheckResult.FAIL
+
+
 # --- forbidden_param (least privilege) -------------------------------------
 
 def test_forbidden_param_flags_force_and_scope():

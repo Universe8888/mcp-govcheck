@@ -19,14 +19,15 @@ from __future__ import annotations
 
 from mcp_govcheck import controls
 from mcp_govcheck.evidence import DEFAULT_POLICIES, attest
-from mcp_govcheck.types import CheckResult, EvidenceStatus, ToolCall, ToolSpec
+from mcp_govcheck.rubric import Rubric
+from mcp_govcheck.types import CheckResult, EvidenceStatus, Finding, ToolCall, ToolSpec
 
 
-def _findings_for(rubric, tool: ToolSpec, check_id: str):
+def _findings_for(rubric: Rubric, tool: ToolSpec, check_id: str) -> list[Finding]:
     return [f for f in rubric.evaluate([tool]) if f.check_id == check_id]
 
 
-def s1_destructive_without_confirm_always_flagged(rubric) -> str | None:
+def s1_destructive_without_confirm_always_flagged(rubric: Rubric) -> str | None:
     # Vary the destructive tool name across delete_/purge_ to dodge ordering luck.
     confirm_checks = ("destructive-requires-confirmation", "purge-requires-confirmation")
     for name in ("delete_x", "delete_everything", "purge_db"):
@@ -43,7 +44,7 @@ def s1_destructive_without_confirm_always_flagged(rubric) -> str | None:
     return None
 
 
-def s2_violation_blocks_satisfied(_rubric) -> str | None:
+def s2_violation_blocks_satisfied(_rubric: Rubric) -> str | None:
     calls = [
         ToolCall(tool="delete_asset", confirmed=True, raw_index=0),
         ToolCall(tool="delete_asset", confirmed=False, raw_index=1),  # violation
@@ -55,7 +56,7 @@ def s2_violation_blocks_satisfied(_rubric) -> str | None:
     return None
 
 
-def s3_violation_recorded_as_exception(_rubric) -> str | None:
+def s3_violation_recorded_as_exception(_rubric: Rubric) -> str | None:
     calls = [ToolCall(tool="delete_asset", confirmed=False, raw_index=7)]
     pack = attest("eval", calls, DEFAULT_POLICIES)
     if not any("log#7" in exc for ev in pack.evidence for exc in ev.exceptions):
@@ -63,7 +64,7 @@ def s3_violation_recorded_as_exception(_rubric) -> str | None:
     return None
 
 
-def s4_control_mapping_is_total(rubric) -> str | None:
+def s4_control_mapping_is_total(rubric: Rubric) -> str | None:
     refs: set[str] = set()
     for check in rubric.checks:
         refs.update(check.control_refs)
@@ -75,7 +76,7 @@ def s4_control_mapping_is_total(rubric) -> str | None:
     return None
 
 
-def s5_force_escape_hatch_always_flagged(rubric) -> str | None:
+def s5_force_escape_hatch_always_flagged(rubric: Rubric) -> str | None:
     tool = ToolSpec(name="do_thing", description="Does a thing.",
                     params={"force": {"type": "boolean", "description": "skip"}})
     findings = _findings_for(rubric, tool, "no-force-escape-hatch")
@@ -93,7 +94,7 @@ SAFETY_CASES = [
 ]
 
 
-def run_safety(rubric) -> list[str]:
+def run_safety(rubric: Rubric) -> list[str]:
     """Return a list of failure messages (empty == all safety properties hold)."""
     failures: list[str] = []
     for case in SAFETY_CASES:

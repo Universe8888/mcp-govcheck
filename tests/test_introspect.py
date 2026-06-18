@@ -61,3 +61,50 @@ def test_tools_from_schema_rejects_garbage(tmp_path):
 def test_empty_input_schema_yields_no_params():
     spec = introspect.tools_from_descriptors([{"name": "x"}])[0]
     assert spec.params == {}
+
+
+class _Tool:
+    def __init__(self, name):
+        self.name = name
+        self.description = ""
+        self.inputSchema = {"properties": {}}
+
+
+class _Page:
+    def __init__(self, tools, next_cursor):
+        self.tools = tools
+        self.nextCursor = next_cursor
+
+
+def test_collect_tools_follows_pagination_cursor():
+    # MCP's tools/list is paginated: a page carries nextCursor and the caller
+    # must keep fetching until it is None. Tools past the first page must not be
+    # dropped (a governance scan that silently skips tools is worse than useless).
+    import anyio
+
+    pages = {
+        None: _Page([_Tool("a"), _Tool("b")], "cur1"),
+        "cur1": _Page([_Tool("c")], "cur2"),
+        "cur2": _Page([_Tool("d")], None),
+    }
+    seen_cursors = []
+
+    async def fetch(cursor):
+        seen_cursors.append(cursor)
+        return pages[cursor]
+
+    specs = anyio.run(introspect._collect_tools, fetch)
+    assert [s.name for s in specs] == ["a", "b", "c", "d"]
+    assert seen_cursors == [None, "cur1", "cur2"]
+
+
+def test_collect_tools_single_page():
+    import anyio
+
+    page = _Page([_Tool("only")], None)
+
+    async def fetch(cursor):
+        return page
+
+    specs = anyio.run(introspect._collect_tools, fetch)
+    assert [s.name for s in specs] == ["only"]

@@ -16,8 +16,13 @@ def test_catalog_is_nonempty_and_well_formed():
 
 
 def test_refs_are_unique():
-    refs = list(controls.CATALOG)
-    assert len(refs) == len(set(refs))
+    # Check the SOURCE sequences, not CATALOG's keys: a duplicate Control ref
+    # would be silently collapsed during dict construction, so asserting on
+    # the already-deduplicated keys can never fail (tautology). Iterating the
+    # source lists catches an accidental duplicate before it is swallowed.
+    source_refs = [c.ref for c in (*controls._ISO27001, *controls._SOC2)]
+    assert len(source_refs) == len(set(source_refs))
+    assert len(source_refs) == len(controls.CATALOG)
 
 
 def test_get_control_known():

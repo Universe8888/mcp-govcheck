@@ -56,4 +56,10 @@ select = ["E", "F", "I", "N", "UP", "B", "SIM"]
 python_version = "3.11"
 packages = ["mcp_govcheck"]
 strict = true
+
+# Only the optional MCP SDK lacks stubs; scope the suppression to it so an
+# unresolved first-party import (typo, dropped dependency) still fails --strict
+# instead of being silently downgraded to Any.
+[[tool.mypy.overrides]]
+module = ["mcp.*"]
 ignore_missing_imports = true

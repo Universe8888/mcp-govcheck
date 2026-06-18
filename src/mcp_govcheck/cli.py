@@ -22,6 +22,7 @@ from . import attest as _attest
 from . import report, scan_tools
 from .introspect import tools_from_schema, tools_from_server
 from .rubric import Rubric, load_rubric
+from .types import ToolSpec
 
 EXIT_CLEAN = 0
 EXIT_FINDINGS = 1
@@ -45,19 +46,32 @@ def _emit(text: str, out: str | None) -> None:
         print(text)
 
 
+def _introspect_server(server: str) -> list[ToolSpec]:
+    """Launch a stdio MCP server and introspect it, translating any failure
+    (empty command, missing SDK, failed handshake) into a ``ValueError`` so the
+    CLI surfaces it as a usage/input error (exit 2), never a governance finding.
+    """
+    parts = shlex.split(server)
+    if not parts:
+        raise ValueError("--server command is empty")
+    try:
+        return tools_from_server(parts[0], parts[1:])
+    except (ValueError, OSError):
+        raise  # already an input/environment error; let main() format it
+    except Exception as exc:  # missing SDK, handshake/protocol error, anyio group
+        raise ValueError(f"could not introspect server {server!r}: {exc}") from exc
+
+
 def _cmd_scan(ns: argparse.Namespace) -> int:
     rubric = _load_rubric(ns.rubric)
     if ns.server:
-        parts = shlex.split(ns.server)
-        if not parts:
-            print("error: --server command is empty", file=sys.stderr)
-            return EXIT_ERROR
-        tools = tools_from_server(parts[0], parts[1:])
+        if ns.source:
+            raise ValueError("pass either a schema file or --server, not both")
+        tools = _introspect_server(ns.server)
         target = ns.server
     else:
         if not ns.source:
-            print("error: provide a schema file or --server", file=sys.stderr)
-            return EXIT_ERROR
+            raise ValueError("provide a schema file or --server")
         tools = tools_from_schema(ns.source)
         target = ns.source
     scorecard = scan_tools(tools, rubric, target=target)
@@ -122,7 +136,10 @@ def main(argv: list[str] | None = None) -> int:
     ns = parser.parse_args(argv)
     try:
         return int(ns.func(ns))
-    except (FileNotFoundError, ValueError) as exc:
+    except (OSError, ValueError) as exc:
+        # OSError covers bad input paths and unwritable --out targets
+        # (PermissionError / IsADirectoryError / NotADirectoryError);
+        # ValueError covers malformed schemas/logs and rejected CLI usage.
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_ERROR
 

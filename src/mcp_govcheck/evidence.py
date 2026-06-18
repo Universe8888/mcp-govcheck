@@ -47,20 +47,21 @@ def load_calls(path: str | Path) -> list[ToolCall]:
 
     One JSON object per line. Tolerant of field-name variants:
     ``tool``/``tool_name``/``name`` and ``confirmed``/``confirm``. Each call
-    keeps its line index (``raw_index``) so evidence can cite ``log#<n>``.
-    Blank lines are skipped; a malformed line raises (fail loud — a broken
-    audit log must not silently produce clean evidence).
+    keeps its true 1-based source line number (``raw_index``) so evidence can
+    cite ``log#<n>`` at the exact line — the same numbering the malformed-line
+    error uses. Blank lines are skipped (they do not shift the citation); a
+    malformed line raises (fail loud — a broken audit log must not silently
+    produce clean evidence).
     """
     calls: list[ToolCall] = []
     lines = Path(path).read_text(encoding="utf-8").splitlines()
-    index = 0
-    for lineno, line in enumerate(lines):
+    for lineno, line in enumerate(lines, start=1):
         if not line.strip():
             continue
         try:
             obj = json.loads(line)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"{path}:{lineno + 1}: invalid JSON in tool-call log") from exc
+            raise ValueError(f"{path}:{lineno}: invalid JSON in tool-call log") from exc
         tool = obj.get("tool") or obj.get("tool_name") or obj.get("name") or ""
         confirmed = _truthy(obj.get("confirmed", obj.get("confirm", False)))
         calls.append(
@@ -70,10 +71,9 @@ def load_calls(path: str | Path) -> list[ToolCall]:
                 confirmed=confirmed,
                 outcome=obj.get("outcome", "ok"),
                 ts=obj.get("ts"),
-                raw_index=index,
+                raw_index=lineno,
             )
         )
-        index += 1
     return calls
 
 

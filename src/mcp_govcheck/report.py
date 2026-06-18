@@ -16,6 +16,16 @@ from .types import EvidencePack, EvidenceStatus, Scorecard, Severity
 _SEVERITY_ORDER = {Severity.HIGH: 0, Severity.MEDIUM: 1, Severity.LOW: 2}
 
 
+def _cell(value: str) -> str:
+    """Escape a value for safe interpolation into a markdown table cell.
+
+    Untrusted text (tool names, claims, details, exceptions) can contain a
+    literal ``|`` that would otherwise inject a spurious column and corrupt the
+    deterministic, snapshot-tested table. Every dynamic cell goes through here.
+    """
+    return value.replace("|", "\\|")
+
+
 # --- Scorecard -------------------------------------------------------------
 
 def scorecard_to_dict(sc: Scorecard) -> dict[str, Any]:
@@ -70,9 +80,9 @@ def scorecard_to_markdown(sc: Scorecard) -> str:
                   "|---|---|---|---|---|"]
         for f in failures:
             refs = ", ".join(f.control_refs) or "—"
-            detail = f.detail.replace("|", "\\|")
             lines.append(
-                f"| {f.severity.value} | `{f.tool}` | {f.check_id} | {refs} | {detail} |"
+                f"| {f.severity.value} | `{_cell(f.tool)}` | {_cell(f.check_id)} | "
+                f"{_cell(refs)} | {_cell(f.detail)} |"
             )
         lines.append("")
 
@@ -139,11 +149,11 @@ def evidence_to_markdown(pack: EvidencePack) -> str:
     }
     for e in pack.evidence:
         ctrl = controls.get_control(e.control_ref)
-        refs = ", ".join(e.evidence_refs) or "—"
-        exc = "; ".join(e.exceptions).replace("|", "\\|") or "—"
+        refs = _cell(", ".join(e.evidence_refs)) or "—"
+        exc = _cell("; ".join(e.exceptions)) or "—"
         lines.append(
-            f"| **{e.control_ref}** {ctrl.title} | {icon[e.status]} | "
-            f"{e.claim} | {refs} | {exc} |"
+            f"| **{_cell(e.control_ref)}** {_cell(ctrl.title)} | {icon[e.status]} | "
+            f"{_cell(e.claim)} | {refs} | {exc} |"
         )
     lines.append("")
     return "\n".join(lines)

@@ -96,8 +96,9 @@ canonical catalog ([`controls.py`](./src/mcp_govcheck/controls.py)):
 
 | Check | Principle | Controls |
 |---|---|---|
-| `destructive-requires-confirmation` | Human-in-the-loop on destructive actions | ISO27001:A.8.2 · SOC2:CC8.1 |
-| `no-force-escape-hatch` | Least privilege (no `force` / wildcard `scope`) | ISO27001:A.8.3 · SOC2:CC6.3 |
+| `destructive-requires-confirmation` | Human-in-the-loop on `delete_*` actions | ISO27001:A.8.2 · SOC2:CC8.1 |
+| `purge-requires-confirmation` | Human-in-the-loop on `purge_*` actions | ISO27001:A.8.2 · SOC2:CC8.1 |
+| `no-force-escape-hatch` | Least privilege (no `force` / `skip_*` / `no_confirm` / `scope`) | ISO27001:A.8.3 · SOC2:CC6.3 |
 | `tool-has-description` | Auditability — tools documented | ISO27001:A.8.15 |
 | `parameters-documented` | Auditability — parameters documented | ISO27001:A.8.15 · SOC2:CC7.2 |
 

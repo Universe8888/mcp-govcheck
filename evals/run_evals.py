@@ -22,10 +22,11 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "evals"))
 
-from safety_cases import run_safety  # noqa: E402
+from safety_cases import SAFETY_CASES, run_safety  # noqa: E402
 
 from mcp_govcheck import introspect, scan_tools  # noqa: E402
-from mcp_govcheck.rubric import load_rubric  # noqa: E402
+from mcp_govcheck.rubric import Rubric, load_rubric  # noqa: E402
+from mcp_govcheck.types import ToolSpec  # noqa: E402
 
 FIXTURES = REPO / "evals" / "fixtures" / "tool_schemas.json"
 SCENARIOS = REPO / "evals" / "scenarios.yaml"
@@ -33,12 +34,14 @@ RUBRIC = REPO / "rubrics" / "default.yaml"
 BENCHMARK = REPO / "BENCHMARK.md"
 
 
-def _load_fixture_tools(name: str, all_fixtures: dict):
+def _load_fixture_tools(name: str, all_fixtures: dict) -> list[ToolSpec]:
     descriptors = all_fixtures[name]
     return introspect.tools_from_descriptors(descriptors)
 
 
-def run_accuracy(rubric, fixtures: dict, scenarios: list[dict]) -> tuple[int, int, list[str]]:
+def run_accuracy(
+    rubric: Rubric, fixtures: dict, scenarios: list[dict]
+) -> tuple[int, int, list[str]]:
     """Return (correct, total, mismatch_messages) over all labeled expectations."""
     correct = 0
     total = 0
@@ -79,8 +82,8 @@ def main(argv: list[str] | None = None) -> int:
     safety_failures = run_safety(rubric)
 
     accuracy = correct / total if total else 1.0
-    safety_pass = len(run_safety.__globals__["SAFETY_CASES"]) - len(safety_failures)  # type: ignore[attr-defined]
-    safety_total = len(run_safety.__globals__["SAFETY_CASES"])  # type: ignore[attr-defined]
+    safety_total = len(SAFETY_CASES)
+    safety_pass = safety_total - len(safety_failures)
 
     print(f"Scan accuracy: {correct}/{total} = {accuracy:.0%}")
     for m in mismatches:

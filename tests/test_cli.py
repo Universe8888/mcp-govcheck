@@ -66,6 +66,44 @@ def test_empty_server_command_exits_two():
     assert cli.main(["scan", "--server", "   "]) == cli.EXIT_ERROR
 
 
+def test_unwritable_out_path_exits_two(tmp_path, capsys):
+    # --out points at an existing directory: write_text raises an OSError
+    # (PermissionError on Windows / IsADirectoryError on POSIX). Per the
+    # contract an unwritable output target is a usage error (2), not an
+    # uncaught traceback that Python would exit 1 on (== EXIT_FINDINGS).
+    schema = _write_schema(tmp_path, [
+        {"name": "get_asset", "description": "Read an asset by id.",
+         "inputSchema": {"properties": {"asset_id": {"type": "integer", "description": "id"}}}}
+    ])
+    code = cli.main(["scan", schema, "--out", str(tmp_path)])
+    assert code == cli.EXIT_ERROR
+    assert "error" in capsys.readouterr().err.lower()
+
+
+def test_server_introspection_failure_exits_two(monkeypatch, capsys):
+    # A missing optional SDK (ModuleNotFoundError) or a failed MCP handshake is
+    # an environment/input error → EXIT_ERROR (2), never EXIT_FINDINGS (1).
+    def boom(command, args):
+        raise ModuleNotFoundError("No module named 'mcp'")
+
+    monkeypatch.setattr(cli, "tools_from_server", boom)
+    code = cli.main(["scan", "--server", "python whatever.py"])
+    assert code == cli.EXIT_ERROR
+    assert "error" in capsys.readouterr().err.lower()
+
+
+def test_both_schema_and_server_exits_two(tmp_path, capsys):
+    # Two mutually exclusive input modes: passing both must be rejected, not
+    # silently resolved (which previously discarded the schema file).
+    schema = _write_schema(tmp_path, [
+        {"name": "get_asset", "description": "Read an asset by id.",
+         "inputSchema": {"properties": {}}}
+    ])
+    code = cli.main(["scan", schema, "--server", "python server.py"])
+    assert code == cli.EXIT_ERROR
+    assert "both" in capsys.readouterr().err.lower()
+
+
 def test_missing_subcommand_errors():
     with pytest.raises(SystemExit):
         cli.main([])

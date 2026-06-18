@@ -65,12 +65,11 @@ def scan(
     * If `command` is given, launch that stdio MCP server (``source`` is a label).
     * Otherwise treat `source` as a path to a static tool-schema JSON file.
     """
+    target = str(source)
     if command is not None:
         tools = introspect.tools_from_server(command, args or [])
-        target = str(source)
     else:
         tools = introspect.tools_from_schema(source)
-        target = str(source)
     return scan_tools(tools, rubric, target=target)
 
 

@@ -6,6 +6,7 @@ from mcp_govcheck.evidence import (
     DEFAULT_POLICIES,
     EvidencePolicy,
     attest,
+    load_calls,
 )
 from mcp_govcheck.types import EvidenceStatus, ToolCall
 
@@ -85,6 +86,39 @@ def test_default_policies_run_end_to_end():
     statuses = {e.control_ref: e.status for e in pack.evidence}
     assert statuses["ISO27001:A.8.2"] is EvidenceStatus.VIOLATED
     assert statuses["ISO27001:A.8.15"] is EvidenceStatus.SATISFIED
+
+
+def test_raw_index_is_true_source_line_with_blank_lines(tmp_path):
+    # raw_index must be the actual file line number (1-based) so the `log#<n>`
+    # evidence citation points at the real offending line — even when blank
+    # lines precede it. A non-blank call counter would silently mis-cite.
+    log = tmp_path / "calls.jsonl"
+    log.write_text(
+        '{"tool": "get_asset", "outcome": "ok"}\n'
+        "\n"  # blank line — must not shift the citation
+        '{"tool": "delete_asset", "confirmed": false, "outcome": "ok"}\n',
+        encoding="utf-8",
+    )
+    calls = load_calls(log)
+    # The delete call is physically on line 3 of the file.
+    delete_call = next(c for c in calls if c.tool == "delete_asset")
+    assert delete_call.raw_index == 3
+
+    pack = attest(str(log), calls, DEFAULT_POLICIES)
+    assert any("log#3" in exc for e in pack.evidence for exc in e.exceptions)
+
+
+def test_raw_index_matches_malformed_line_numbering(tmp_path):
+    # The `log#<n>` citation and the malformed-line error must use the SAME
+    # 1-based line numbering, so the two never disagree about "line N".
+    good = tmp_path / "good.jsonl"
+    good.write_text('{"tool": "get_asset"}\n', encoding="utf-8")
+    assert load_calls(good)[0].raw_index == 1  # first line is line 1, not 0
+
+    bad = tmp_path / "bad.jsonl"
+    bad.write_text("not json\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=r":1:"):  # also reports line 1
+        load_calls(bad)
 
 
 def test_all_calls_logged_flags_missing_tool_name():

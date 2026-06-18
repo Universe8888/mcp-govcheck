@@ -79,7 +79,7 @@ job), only *evaluate the design* and *attest to the record*.
 ## Provenance
 
 The patterns here are generalized from private operational hooks (a real allow/deny gate, a
-write-verify ledger with a pass/fail summary, and ISO 27001 / NIST control mappings) into clean,
+write-verify ledger with a pass/fail summary, and ISO 27001 / SOC 2 control mappings) into clean,
 tested, reusable infrastructure. The eval discipline (labeled fixtures + a timestamped, append-only
 `BENCHMARK.md`) follows the same convention used in the author's `wikilens` project.
 

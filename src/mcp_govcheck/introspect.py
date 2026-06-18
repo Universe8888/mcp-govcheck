@@ -16,10 +16,18 @@ A tool's JSON-Schema ``inputSchema.properties`` maps directly to
 from __future__ import annotations
 
 import json
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from .types import ToolSpec
+
+
+class _ToolsPage(Protocol):
+    """The shape of one `tools/list` page we depend on (SDK ``ListToolsResult``)."""
+
+    tools: list[Any]
+    nextCursor: str | None  # noqa: N815 — matches the MCP wire/SDK field name
 
 
 def _params_from_input_schema(input_schema: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
@@ -74,6 +82,34 @@ def tools_from_server(command: str, args: list[str] | None = None) -> list[ToolS
     return anyio.run(_async_tools_from_server, command, args or [])
 
 
+def _toolspec_from_mcp_tool(tool: Any) -> ToolSpec:
+    """Convert one SDK ``Tool`` object into a ToolSpec."""
+    return ToolSpec(
+        name=tool.name,
+        description=(getattr(tool, "description", "") or "").strip(),
+        params=_params_from_input_schema(getattr(tool, "inputSchema", None)),
+    )
+
+
+async def _collect_tools(
+    fetch_page: Callable[[str | None], Awaitable[_ToolsPage]],
+) -> list[ToolSpec]:
+    """Follow ``tools/list`` pagination to completion.
+
+    ``fetch_page(cursor)`` fetches one page (``.tools`` + ``.nextCursor``). We
+    keep fetching until ``nextCursor`` is falsy so tools beyond the first page
+    are never silently dropped — a partial scan would look misleadingly clean.
+    """
+    specs: list[ToolSpec] = []
+    cursor: str | None = None
+    while True:
+        page = await fetch_page(cursor)
+        specs.extend(_toolspec_from_mcp_tool(tool) for tool in page.tools)
+        cursor = page.nextCursor
+        if not cursor:
+            return specs
+
+
 async def _async_tools_from_server(command: str, args: list[str]) -> list[ToolSpec]:
     # Imported lazily so the SDK is only required for live introspection.
     from mcp import ClientSession, StdioServerParameters
@@ -82,16 +118,4 @@ async def _async_tools_from_server(command: str, args: list[str]) -> list[ToolSp
     params = StdioServerParameters(command=command, args=args)
     async with stdio_client(params) as (read, write), ClientSession(read, write) as session:
         await session.initialize()
-        result = await session.list_tools()
-
-    specs: list[ToolSpec] = []
-    for tool in result.tools:
-        input_schema = getattr(tool, "inputSchema", None)
-        specs.append(
-            ToolSpec(
-                name=tool.name,
-                description=(getattr(tool, "description", "") or "").strip(),
-                params=_params_from_input_schema(input_schema),
-            )
-        )
-    return specs
+        return await _collect_tools(lambda cursor: session.list_tools(cursor=cursor))

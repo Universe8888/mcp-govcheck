@@ -76,7 +76,7 @@ class ToolCall:
     confirmed: bool = False
     outcome: str = "ok"  # "ok" | "denied" | "error"
     ts: str | None = None
-    raw_index: int = -1  # line index in the source log, for evidence_refs
+    raw_index: int = -1  # 1-based source-log line number, for evidence_refs (log#<n>)
 
 
 @dataclass(frozen=True)
